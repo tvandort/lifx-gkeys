@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Fclp;
 
 namespace lifx_gkeys
@@ -6,6 +8,8 @@ namespace lifx_gkeys
 
     class Program
     {
+        static HttpClient client = new HttpClient();
+
         static void Main(string[] args)
         {
             var p = new FluentCommandLineParser<ApplicationArguments>();
@@ -22,23 +26,15 @@ namespace lifx_gkeys
             
             if(!result.HasErrors)
             {
-                Run(p.Object);    
-            } else
-            {
-                foreach (var err in result.Errors)
-                {
-                    var option = err.Option;
-                    Console.WriteLine($"--{option.LongName}: {option.Description}.");
-                }
+                Run(p.Object).Wait();    
             }
-
-            Console.ReadKey();
         }
 
-        static void Run(ApplicationArguments args)
+        static async Task Run(ApplicationArguments args)
         {
-            Console.WriteLine($"State: {args.State}");
-            Console.WriteLine($"Room: {args.Room}");
+            var data = new Payload(args.State);
+            client.BaseAddress = new Uri("http://localhost:3000");
+            await client.PostAsJsonAsync("/lights", data);            
         }
     }
 }
